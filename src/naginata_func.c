@@ -269,8 +269,10 @@ void ngh_DFO() { // {Del}
     raise_zmk_keycode_state_changed_from_encoded(DELETE, false, timestamp);
 }
 
-void ngh_DFP() { // +{Esc 2}
+void ngh_DFP() { // +{Esc 3}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
+    raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
+    raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
@@ -378,8 +380,8 @@ void ngh_MCR() { // {Home}{改行}{Space 1}{←}
     ng_next_row();
 }
 
-void ngh_MCT() { // 〇{改行}
-    input_unicode_hex(N3, N0, N0, N7);
+void ngh_MCT() { // ○{改行}
+    input_unicode_hex(N2, N5, C, B);
 }
 
 void ngh_MCA() { // 《{改行}
@@ -490,21 +492,16 @@ void ngh_CVK() { // {→}
     ng_right(1);
 }
 
-void ngh_CVL() { // {改行}{Space}+{Home}^x{BS}
-    raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(SPACE, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(SPACE, false, timestamp);
+void ngh_CVL() { // +{← 7}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_home();
+    ng_left(7);
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
-    ng_cut();
-    raise_zmk_keycode_state_changed_from_encoded(BSPC, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(BSPC, false, timestamp);
 }
 
-void ngh_CVSCLN() { // ^y
-    ng_redo();
+void ngh_CVSCLN() { // +{→ 7}
+    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
+    ng_right(7);
+    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ngh_CVN() { // +{End}
@@ -525,16 +522,15 @@ void ngh_CVCOMM() { // +{→}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
-void ngh_CVDOT() { // +{← 7}
+void ngh_CVDOT() { // {End}+{Home}
+    ng_end();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_left(7);
+    ng_home();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
-void ngh_CVSLSH() { // +{→ 7}
-    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_right(7);
-    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
+void ngh_CVSLSH() { // ^y
+    ng_redo();
 }
 
 void ng_cut() {
