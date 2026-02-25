@@ -13,16 +13,16 @@ manifest:
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
-    - name: eswai # ここを追加
-      url-base: https://github.com/eswai
+    - name: tor-nky # ここを追加
+      url-base: https://github.com/tor-nky
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: main
       import: app/west.yml
     - name: zmk-naginata # ここを追加
-      remote: eswai
-      revision: main
+      remote: tor-nky
+      revision: naginata_v17
   self:
     path: config
 ```
