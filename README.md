@@ -22,7 +22,7 @@ manifest:
       import: app/west.yml
     - name: zmk-naginata # ここを追加
       remote: tor-nky
-      revision: naginata_v17
+      revision: madake
   self:
     path: config
 ```
