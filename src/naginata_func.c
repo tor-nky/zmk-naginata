@@ -159,19 +159,19 @@ void input_unicode_hex(int n1, int n2, int n3, int n4) {
     }
 }
 
-void ng_T() { ng_left(1); }
+void ng_T() { ng_next_row(); }
 
-void ng_Y() { ng_right(1); }
+void ng_Y() { ng_prev_row(); }
 
 void ng_ST() {
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_left(1);
+    ng_next_row();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ng_SY() {
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_right(1);
+    ng_prev_row();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 void ngh_JKQ() { // ^{End}
@@ -287,18 +287,20 @@ void ngh_DFH() { // {Enter}{End}
 }
 
 void ngh_DFJ() { // {↑}
-    ng_up(1);
+    ng_prev_char();
 }
 
 void ngh_DFK() { // +{↑}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_up(1);
+    ng_prev_char();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ngh_DFL() { // +{↑ 7}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_up(7);
+    for (uint8_t i = 0; i < 7; i++) {
+        ng_prev_char();
+    }
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
@@ -311,18 +313,20 @@ void ngh_DFN() { // {End}
 }
 
 void ngh_DFM() { // {↓}
-    ng_down(1);
+    ng_next_char();
 }
 
 void ngh_DFCOMM() { // +{↓}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_down(1);
+    ng_next_char();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ngh_DFDOT() { // +{↓ 7}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_down(7);
+    for (uint8_t i = 0; i < 7; i++) {
+        ng_next_char();
+    }
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
@@ -485,22 +489,26 @@ void ngh_CVH() { // ^c
 }
 
 void ngh_CVJ() { // {←}
-    ng_left(1);
+    ng_next_row();
 }
 
 void ngh_CVK() { // {→}
-    ng_right(1);
+    ng_prev_row();
 }
 
 void ngh_CVL() { // +{← 7}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_left(7);
+    for (uint8_t i = 0; i < 7; i++) {
+        ng_next_row();
+    }
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ngh_CVSCLN() { // +{→ 7}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_right(7);
+    for (uint8_t i = 0; i < 7; i++) {
+        ng_prev_row();
+    }
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
@@ -512,13 +520,13 @@ void ngh_CVN() { // +{End}
 
 void ngh_CVM() { // +{←}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_left(1);
+    ng_next_row();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
 void ngh_CVCOMM() { // +{→}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    ng_right(1);
+    ng_prev_row();
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
 }
 
@@ -638,36 +646,18 @@ void ng_prev_row() {
 }
 
 void ng_next_char() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        if (naginata_config.tategaki) {
-            ng_down(1);
-        } else {
-            ng_right(1);
-        }
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(F), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(F), false, timestamp);
-        break;
+    if (naginata_config.tategaki) {
+        ng_down(1);
+    } else {
+        ng_right(1);
     }
 }
 
 void ng_prev_char() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        if (naginata_config.tategaki) {
-            ng_up(1);
-        } else {
-            ng_left(1);
-        }
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(B), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(B), false, timestamp);
-        break;
+    if (naginata_config.tategaki) {
+        ng_up(1);
+    } else {
+        ng_left(1);
     }
 }
 
@@ -700,17 +690,8 @@ void ng_end() {
 }
 
 void ng_katakana() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        raise_zmk_keycode_state_changed_from_encoded(LC(I), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(I), false, timestamp);
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(K), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(K), false, timestamp);
-        break;
-    }
+    raise_zmk_keycode_state_changed_from_encoded(F7, true, timestamp);
+    raise_zmk_keycode_state_changed_from_encoded(F7, false, timestamp);
 }
 
 void ng_save() {
@@ -728,17 +709,8 @@ void ng_save() {
 }
 
 void ng_hiragana() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        raise_zmk_keycode_state_changed_from_encoded(LC(U), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(U), false, timestamp);
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(J), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(J), false, timestamp);
-        break;
-    }
+    raise_zmk_keycode_state_changed_from_encoded(F6, true, timestamp);
+    raise_zmk_keycode_state_changed_from_encoded(F6, false, timestamp);
 }
 
 void ng_redo() {
@@ -793,6 +765,8 @@ void ng_eof() {
         raise_zmk_keycode_state_changed_from_encoded(LC(END), false, timestamp);
         break;
     case NG_MACOS:
+        raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), false, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(DOWN), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(DOWN), false, timestamp);
         break;
