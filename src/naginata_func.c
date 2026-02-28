@@ -56,6 +56,7 @@ void switch_to_hex_input() {
         case NG_LINUX:
             return;
         case NG_IOS:
+            return;
     }
 }
 
@@ -71,6 +72,7 @@ void return_to_kana_input() {
         case NG_WINDOWS:
         case NG_LINUX:
         case NG_IOS:
+            return;
     }
 }
 
@@ -93,6 +95,7 @@ void press_compose_key() {
             k_sleep(K_MSEC(50));
             return;
         case NG_IOS:
+            return;
     }
 }
 
@@ -113,6 +116,7 @@ void release_compose_key() {
             k_sleep(K_MSEC(50));
             return;
         case NG_IOS:
+            return;
     }
 }
 
@@ -155,6 +159,8 @@ void input_unicode_hex(int n1, int n2, int n3, int n4) {
             raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
             raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
             return_to_kana_input();
+            return;
+        case NG_IOS:
             return;
     }
 }
@@ -270,14 +276,27 @@ void ngh_DFO() { // {Del}
 }
 
 void ngh_DFP() { // +{Esc 3}
-    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
+    switch (naginata_config.os) {
+    case NG_WINDOWS:
+    case NG_LINUX:
+        raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
+        break;
+    case NG_MACOS:
+        raise_zmk_keycode_state_changed_from_encoded(KP_NUM, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(KP_NUM, false, timestamp);
+        break;
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
+        break;
+    }
 }
 
 void ngh_DFH() { // {Enter}{End}
@@ -549,6 +568,7 @@ void ng_cut() {
         raise_zmk_keycode_state_changed_from_encoded(LC(X), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(X), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(X), false, timestamp);
         break;
@@ -563,6 +583,7 @@ void ng_copy() {
         raise_zmk_keycode_state_changed_from_encoded(LC(C), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(C), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(C), false, timestamp);
         break;
@@ -577,6 +598,7 @@ void ng_paste() {
         raise_zmk_keycode_state_changed_from_encoded(LC(V), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(V), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(V), false, timestamp);
         break;
@@ -651,6 +673,7 @@ void ng_home() {
         raise_zmk_keycode_state_changed_from_encoded(HOME, false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LC(A), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LC(A), false, timestamp);
         break;
@@ -665,6 +688,7 @@ void ng_end() {
         raise_zmk_keycode_state_changed_from_encoded(END, false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LC(E), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LC(E), false, timestamp);
         break;
@@ -687,6 +711,8 @@ void ng_save() {
         raise_zmk_keycode_state_changed_from_encoded(LG(S), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(S), false, timestamp);
         break;
+    case NG_IOS:
+        break;
     }
 }
 
@@ -703,6 +729,7 @@ void ng_redo() {
         raise_zmk_keycode_state_changed_from_encoded(LC(Y), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LS(LG((S))), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LS(LG((S))), false, timestamp);
         break;
@@ -717,6 +744,7 @@ void ng_undo() {
         raise_zmk_keycode_state_changed_from_encoded(LC(Z), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(Z), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(Z), false, timestamp);
         break;
@@ -736,6 +764,8 @@ void ng_saihenkan() {
         raise_zmk_keycode_state_changed_from_encoded(LANG1, true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LANG1, false, timestamp);
         break;
+    case NG_IOS:
+        break;
     }
 }
 
@@ -747,6 +777,7 @@ void ng_eof() {
         raise_zmk_keycode_state_changed_from_encoded(LC(END), false, timestamp);
         break;
     case NG_MACOS:
+    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), false, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(DOWN), true, timestamp);
