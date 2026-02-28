@@ -612,36 +612,18 @@ void ng_right(uint8_t c) {
 }
 
 void ng_next_row() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        if (naginata_config.tategaki) {
-            ng_left(1);
-        } else{
-            ng_down(1);
-        }
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(N), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(N), false, timestamp);
-        break;
+    if (naginata_config.tategaki) {
+        ng_left(1);
+    } else{
+        ng_down(1);
     }
 }
 
 void ng_prev_row() {
-    switch (naginata_config.os) {
-    case NG_WINDOWS:
-    case NG_LINUX:
-        if (naginata_config.tategaki) {
-            ng_right(1);
-        } else {
-            ng_up(1);
-        }
-        break;
-    case NG_MACOS:
-        raise_zmk_keycode_state_changed_from_encoded(LC(P), true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(LC(P), false, timestamp);
-        break;
+    if (naginata_config.tategaki) {
+        ng_right(1);
+    } else {
+        ng_up(1);
     }
 }
 
