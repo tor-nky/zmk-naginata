@@ -11,14 +11,14 @@
 
 int64_t timestamp;
 
-#define NG_WINDOWS (uint8_t)0
-#define NG_MACOS (uint8_t)1
-#define NG_LINUX (uint8_t)2
-#define NG_IOS (uint8_t)3
+#define NG_WINDOWS 0
+#define NG_MACOS 1
+#define NG_LINUX 2
+#define NG_IOS 3
 
 typedef union {
     uint8_t os : 2;
-    bool tategaki : true;
+    bool tategaki : 1; // true: 縦書き, false: 横書き
 } user_config_t;
 
 user_config_t naginata_config;

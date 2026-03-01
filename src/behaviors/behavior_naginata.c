@@ -73,10 +73,9 @@ static int8_t n_pressed_keys = 0;   // 押しているキーの数
 #define NG_LINUX 2
 #define NG_IOS 3
 
-// EEPROMに保存する設定
 typedef union {
     uint8_t os : 2;  // 2 bits can store values 0-3 (NG_WINDOWS, NG_MACOS, NG_LINUX, NG_IOS)
-    bool tategaki : true; // true: 縦書き, false: 横書き
+    bool tategaki : 1;
 } user_config_t;
 
 extern user_config_t naginata_config;
