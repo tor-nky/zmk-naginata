@@ -74,7 +74,7 @@ static int8_t n_pressed_keys = 0;   // 押しているキーの数
 #define NG_LINUX 2
 #define NG_IOS 3
 
-typedef union {
+typedef struct {
     uint8_t os : 2;  // 2 bits can store values 0-3 (NG_WINDOWS, NG_MACOS, NG_LINUX, NG_IOS)
     bool tategaki : 1;
 } user_config_t;
