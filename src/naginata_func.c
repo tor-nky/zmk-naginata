@@ -27,8 +27,8 @@ user_config_t naginata_config;
 void naginata_on(void) {
     raise_zmk_keycode_state_changed_from_encoded(LANG1, true, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(LANG1, false, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(INT4, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(INT4, false, timestamp);
+    // raise_zmk_keycode_state_changed_from_encoded(INT4, true, timestamp);
+    // raise_zmk_keycode_state_changed_from_encoded(INT4, false, timestamp);
 }
 
 // 薙刀式をオフ
