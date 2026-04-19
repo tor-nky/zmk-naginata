@@ -23,6 +23,9 @@ typedef struct {
 
 user_config_t naginata_config;
 
+int8_t center_shift_count = 0;
+uint32_t ng_center_keycode = 0;
+
 // 薙刀式をオン
 void naginata_on(void) {
     raise_zmk_keycode_state_changed_from_encoded(LANG1, true, timestamp);
@@ -163,6 +166,21 @@ void input_unicode_hex(int n1, int n2, int n3, int n4) {
         case NG_IOS:
             return;
     }
+}
+
+void ng_space() {
+    if (ng_center_keycode == 0) return;
+
+    if (center_shift_count > 1) {
+        raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
+    }
+    raise_zmk_keycode_state_changed_from_encoded(ng_center_keycode, true, timestamp);
+    raise_zmk_keycode_state_changed_from_encoded(ng_center_keycode, false, timestamp);
+    if (center_shift_count > 1) {
+        raise_zmk_keycode_state_changed_from_encoded(LSHIFT, false, timestamp);
+    }
+
+    ng_center_keycode = 0;
 }
 
 void ng_T() { ng_next_row(); }

@@ -15,8 +15,6 @@
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/behavior.h>
 
-#include <zmk_naginata/nglist.h>
-#include <zmk_naginata/nglistarray.h>
 #include <zmk_naginata/naginata_func.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -25,6 +23,8 @@ extern int64_t timestamp;
 #define NONE 0
 
 // 薙刀式
+#define NKEYS 3 // 組み合わせにある同時押しするキーの数、薙刀式なら3
+                // (最大何キーまでバッファに貯めるか)
 
 // 31キーを32bitの各ビットに割り当てる
 #define B_Q (1UL << 0)
@@ -65,9 +65,12 @@ extern int64_t timestamp;
 
 #define B_SPACE (1UL << 30)
 
-static NGListArray nginput;
 static uint32_t pressed_keys = 0UL; // 押しているキーのビットをたてる
-static int8_t n_pressed_keys = 0;   // 押しているキーの数
+static uint32_t waiting_keys[NKEYS];
+static int8_t   n_waiting_keys = 0;
+static bool is_reuse_key = false;
+extern int8_t   center_shift_count;
+extern uint32_t ng_center_keycode;
 
 #define NG_WINDOWS 0
 #define NG_MACOS 1
@@ -300,7 +303,7 @@ static naginata_kanamap ngdickana[] = {
     {.shift = NONE    , .douji = B_V|B_L|B_J    , .kana = {T, S, A, NONE, NONE, NONE      }, .func = nofunc }, // つぁ
     
     // 追加
-    {.shift = NONE    , .douji = B_SPACE        , .kana = {SPACE, NONE, NONE, NONE, NONE, NONE  }, .func = nofunc},
+    {.shift = NONE    , .douji = B_SPACE        , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = ng_space},
     {.shift = B_SPACE , .douji = B_V            , .kana = {COMMA, ENTER, NONE, NONE, NONE, NONE }, .func = nofunc},
     {.shift = NONE    , .douji = B_Q            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = nofunc},
     {.shift = B_SPACE , .douji = B_M            , .kana = {DOT, ENTER, NONE, NONE, NONE, NONE   }, .func = nofunc},
@@ -319,7 +322,7 @@ static naginata_kanamap ngdickana[] = {
     // 編集モード
     {.shift = B_J|B_K    , .douji = B_Q     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKQ    }, // ^{End}
     {.shift = B_J|B_K    , .douji = B_W     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKW    }, // ／{改行}
-    {.shift = B_J|B_K    , .douji = B_E     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKE    }, // /*ディ*/
+    // {.shift = B_J|B_K    , .douji = B_E     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKE    }, // /*ディ*/
     {.shift = B_J|B_K    , .douji = B_R     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKR    }, // ^s
     {.shift = B_J|B_K    , .douji = B_T     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKT    }, // ・
     {.shift = B_J|B_K    , .douji = B_A     , .kana = {NONE, NONE, NONE, NONE, NONE, NONE} , .func = ngh_JKA    }, // ……{改行}
@@ -380,139 +383,107 @@ static naginata_kanamap ngdickana[] = {
 
 };
 
-// Helper function for counting matches/candidates
-static int count_kana_entries(NGList *keys, bool exact_match) {
-  if (keys->size == 0) return 0;
-
-  int count = 0;
-  uint32_t keyset0 = 0UL, keyset1 = 0UL, keyset2 = 0UL;
-  
-  // keysetを配列にしたらバイナリサイズが増えた
-  switch (keys->size) {
-    case 1:
-      keyset0 = ng_key[keys->elements[0] - A];
-      break;
-    case 2:
-      keyset0 = ng_key[keys->elements[0] - A];
-      keyset1 = ng_key[keys->elements[1] - A];
-      break;
-    default:
-      keyset0 = ng_key[keys->elements[0] - A];
-      keyset1 = ng_key[keys->elements[1] - A];
-      keyset2 = ng_key[keys->elements[2] - A];
-      break;
-  }
-
-  for (int i = 0; i < sizeof ngdickana / sizeof ngdickana[i]; i++) {
-    bool matches = false;
-
-    switch (keys->size) {
-      case 1:
-        if (exact_match) {
-          matches = (ngdickana[i].shift == keyset0) || 
-                   (ngdickana[i].shift == 0UL && ngdickana[i].douji == keyset0);
-        } else {
-          matches = ((ngdickana[i].shift & keyset0) == keyset0) ||
-                   (ngdickana[i].shift == 0UL && (ngdickana[i].douji & keyset0) == keyset0);
+// かな定義を探し、配列の添え字を返す
+// 見つからないと NGMAP_COUNT を返す
+static int ng_search(uint32_t searching_key) {
+    // if (!searching_key)  return false;
+    for (int i = sizeof ngdickana / sizeof ngdickana[i]; i-- > 0; ) {   // 逆順で検索
+        if (searching_key == (ngdickana[i].shift | ngdickana[i].douji)) {
+            return i;
         }
-        break;
-      case 2:
-        if (exact_match) {
-          matches = (ngdickana[i].shift == (keyset0 | keyset1)) ||
-                   (ngdickana[i].shift == keyset0 && ngdickana[i].douji == keyset1) ||
-                   (ngdickana[i].shift == 0UL && ngdickana[i].douji == (keyset0 | keyset1));
-        } else {
-          matches = (ngdickana[i].shift == (keyset0 | keyset1)) ||
-                   (ngdickana[i].shift == keyset0 && (ngdickana[i].douji & keyset1) == keyset1) ||
-                   (ngdickana[i].shift == 0UL && (ngdickana[i].douji & (keyset0 | keyset1)) == (keyset0 | keyset1));
-          // しぇ、ちぇ、など2キーで確定してはいけない
-          if (matches && (ngdickana[i].shift | ngdickana[i].douji) != (keyset0 | keyset1)) {
-            count = 2;
-          }
-        }
-        break;
-      default:
-        if (exact_match) {
-          matches = (ngdickana[i].shift == (keyset0 | keyset1) && ngdickana[i].douji == keyset2) ||
-                   (ngdickana[i].shift == keyset0 && ngdickana[i].douji == (keyset1 | keyset2)) ||
-                   (ngdickana[i].shift == 0UL && ngdickana[i].douji == (keyset0 | keyset1 | keyset2));
-        } else {
-          matches = (ngdickana[i].shift == (keyset0 | keyset1) && (ngdickana[i].douji & keyset2) == keyset2) ||
-                   (ngdickana[i].shift == keyset0 && (ngdickana[i].douji & (keyset1 | keyset2)) == (keyset1 | keyset2)) ||
-                   (ngdickana[i].shift == 0UL && (ngdickana[i].douji & (keyset0 | keyset1 | keyset2)) == (keyset0 | keyset1 | keyset2));
-        }
-        break;
     }
-
-    if (matches) {
-      count++;
-      if (count > 1) break;
-    }
-  }
-
-  return count;
+    return -1;
 }
 
-int number_of_matches(NGList *keys) {  
-  int result = count_kana_entries(keys, true);
-  return result;
+// かな定義を探し出力する
+// 成功すれば true を返す
+static bool ng_search_and_send(uint32_t searching_key) {
+    // if (!searching_key)  return false;
+    int i = ng_search(searching_key);
+    if (i >= 0) {
+        for (int k = 0; k < 6; k++) {
+            uint32_t kana = ngdickana[i].kana[k];
+            if (kana == NONE)
+                break;
+            LOG_DBG(" NAGINATA type keycode 0x%02X", kana);
+            raise_zmk_keycode_state_changed_from_encoded(kana, true, timestamp);
+            raise_zmk_keycode_state_changed_from_encoded(kana, false, timestamp);
+        }
+        ngdickana[i].func();
+        return true;
+    }
+    return false;
 }
 
-int number_of_candidates(NGList *keys) {
-  int result = count_kana_entries(keys, false);
-  return result;
+// 組み合わせが複数ある > 1: 変換しない
+// 組み合わせが一つしかない = 1: 変換を開始する
+// 組み合わせがない = 0: 変換を開始する
+int number_of_candidates(uint32_t search) {
+    int state = 0;
+    for (int i = 0; i < sizeof ngdickana / sizeof ngdickana[i]; i++) {
+        uint32_t key = ngdickana[i].shift | ngdickana[i].douji;
+        // search を含む
+        if ((key & search) == search) {
+            uint32_t remains = key ^ search;
+            switch (remains) {
+            case 0:
+                state = 1;
+                break;
+            default:
+                if ((remains & B_SPACE) || (remains & pressed_keys)) {
+                    break;
+                }
+                return 2;
+            }
+        }
+    }
+    return state;
 }
 
 // キー入力を文字に変換して出力する
-void ng_type(NGList *keys) {
+// 引数 is_send_all: 残りをすべて出力するなら true
+void ng_type(bool is_send_all) {
     LOG_DBG(">NAGINATA NG_TYPE");
 
-    if (keys->size == 0)
-        return;
+    int8_t n_searching_keys = n_waiting_keys;
 
-    if (keys->size == 1 && keys->elements[0] == ENTER) {
-        LOG_DBG(" NAGINATA type keycode 0x%02X", ENTER);
-        raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
-        return;
-    }
+    while (n_searching_keys) {
+        // バッファ内のキーを組み合わせる
+        uint32_t searching_keys = pressed_keys & B_SPACE;   // センターキー
+        for (int8_t i = 0; i < n_searching_keys; i++) {
+            searching_keys |= waiting_keys[i];
+        }
 
-    uint32_t keyset = 0UL;
-    for (int i = 0; i < keys->size; i++) {
-        keyset |= ng_key[keys->elements[i] - A];
-    }
-
-    for (int i = 0; i < sizeof ngdickana / sizeof ngdickana[0]; i++) {
-        if ((ngdickana[i].shift | ngdickana[i].douji) == keyset) {
-            if (ngdickana[i].kana[0] != NONE) {
-                for (int k = 0; k < 6; k++) {
-                    if (ngdickana[i].kana[k] == NONE)
-                        break;
-                    LOG_DBG(" NAGINATA type keycode 0x%02X", ngdickana[i].kana[k]);
-                    raise_zmk_keycode_state_changed_from_encoded(ngdickana[i].kana[k], true,
-                                                                 timestamp);
-                    raise_zmk_keycode_state_changed_from_encoded(ngdickana[i].kana[k], false,
-                                                                 timestamp);
-                }
-            } else {
-                ngdickana[i].func();
+        // 全てのキーの組み合わせていて、同時押し定義の最大数でない
+        if (is_send_all == false && n_searching_keys == n_waiting_keys && n_waiting_keys < NKEYS) {
+            // 変換してよいか調べる
+            int trans_state = number_of_candidates(searching_keys);
+            // 組み合わせがなくなった
+            if (trans_state == 0 && n_searching_keys > 1) {
+                n_searching_keys--;  // 最後のキーを減らして検索
+                continue;
+            // まだ変換できない
+            } else if (trans_state > 1) {
+                break;
             }
-            LOG_DBG("<NAGINATA NG_TYPE");
-            return;
+        }
+
+        // かな定義を探して出力する
+        // 1キーで何も定義がないキーも取り除く
+        if (ng_search_and_send(searching_keys) == true || n_searching_keys == 1) {
+            // 1回出力したらキー再利用は終わり
+            is_reuse_key = false;
+            // 見つかった分のキーを配列から取り除く
+            n_waiting_keys -= n_searching_keys;
+            for (int8_t i = 0; i < n_waiting_keys; i++) {
+                waiting_keys[i] = waiting_keys[i + n_searching_keys];
+            }
+            n_searching_keys = n_waiting_keys;
+        // 見つからなかったら最後のキーを減らして再検索
+        } else {
+            n_searching_keys--;
         }
     }
-
-    // JIみたいにJIを含む同時押しはたくさんあるが、JIのみの同時押しがないとき
-    // 最後の１キーを別に分けて変換する
-    NGList a, b;
-    initializeList(&a);
-    initializeList(&b);
-    for (int i = 0; i < keys->size - 1; i++) {
-        addToList(&a, keys->elements[i]);
-    }
-    addToList(&b, keys->elements[keys->size - 1]);
-    ng_type(&a);
-    ng_type(&b);
 
     LOG_DBG("<NAGINATA NG_TYPE");
 }
@@ -522,85 +493,36 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
     LOG_DBG(">NAGINATA PRESS");
 
     uint32_t keycode = binding->param1;
+    uint32_t recent_key;
 
     switch (keycode) {
     case A ... Z:
-    case SPACE:
-    case ENTER:
     case DOT:
     case COMMA:
     case SLASH:
     case SEMI:
-        n_pressed_keys++;
-        pressed_keys |= ng_key[keycode - A]; // キーの重ね合わせ
-
-        if (keycode == SPACE || keycode == ENTER) {
-            NGList a;
-            initializeList(&a);
-            addToList(&a, keycode);
-            addToListArray(&nginput, &a);
-        } else {
-            NGList a;
-            NGList b;
-            if (nginput.size > 0) {
-                copyList(&(nginput.elements[nginput.size - 1]), &a);
-                copyList(&a, &b);
-                addToList(&b, keycode);
-            }
-
-            // 前のキーとの同時押しの可能性があるなら前に足す
-            // 同じキー連打を除外
-            if (nginput.size > 0 && a.elements[a.size - 1] != keycode &&
-                number_of_candidates(&b) > 0) {
-                removeFromListArrayAt(&nginput, nginput.size - 1);
-                addToListArray(&nginput, &b);
-                // 前のキーと同時押しはない
-            } else {
-                // 連続シフトではない
-                NGList e;
-                initializeList(&e);
-                addToList(&e, keycode);
-                addToListArray(&nginput, &e);
-            }
+        recent_key = ng_key[keycode - A];
+        pressed_keys |= recent_key; // キーの重ね合わせ
+        // 配列に押したキーを保存
+        waiting_keys[n_waiting_keys++] = recent_key;
+        // キー再利用処理
+        if (is_reuse_key == true && ng_search(pressed_keys) >= 0) {
+            is_reuse_key = false;
+            waiting_keys[0] = pressed_keys;
         }
-
-        // 連続シフト
-        static uint32_t rs[10][2] = {{D, F},     {C, V}, {J, K}, {M, COMMA}, {SPACE, 0},
-                                     {ENTER, 0}, {F, 0}, {V, 0}, {J, 0},     {M, 0}};
-
-        uint32_t keyset = 0UL;
-        for (int i = 0; i < nginput.elements[0].size; i++) {
-            keyset |= ng_key[nginput.elements[0].elements[i] - A];
-        }
-        for (int i = 0; i < 10; i++) {
-            NGList rskc;
-            initializeList(&rskc);
-            addToList(&rskc, rs[i][0]);
-            if (rs[i][1] > 0) {
-                addToList(&rskc, rs[i][1]);
-            }
-
-            int c = includeList(&rskc, keycode);
-            uint32_t brs = 0UL;
-            for (int j = 0; j < rskc.size; j++) {
-                brs |= ng_key[rskc.elements[j] - A];
-            }
-
-            NGList l = nginput.elements[nginput.size - 1];
-            for (int j = 0; j < l.size; j++) {
-                addToList(&rskc, l.elements[j]);
-            }
-
-            if (c < 0 && ((brs & pressed_keys) == brs) && (keyset & brs) != brs && number_of_matches(&rskc) > 0) {
-                nginput.elements[nginput.size - 1] = rskc;
-                break;
-            }
-        }
-
-        if (nginput.size > 1 || number_of_candidates(&(nginput.elements[0])) == 1) {
-            ng_type(&(nginput.elements[0]));
-            removeFromListArrayAt(&nginput, 0);
-        }
+        ng_type(false);
+        break;
+    case SPACE:
+    case ENTER:
+        center_shift_count++;
+        recent_key = ng_key[keycode - A];
+        pressed_keys |= recent_key;  // キーを加える
+        ng_center_keycode = keycode;
+        // 残り全部出力
+        ng_type(true);
+        is_reuse_key = false;
+        // 配列に押したキーを保存
+        waiting_keys[n_waiting_keys++] = recent_key;
         break;
     }
 
@@ -617,28 +539,24 @@ bool naginata_release(struct zmk_behavior_binding *binding,
 
     switch (keycode) {
     case A ... Z:
-    case SPACE:
-    case ENTER:
     case DOT:
     case COMMA:
     case SLASH:
     case SEMI:
-        if (n_pressed_keys > 0)
-            n_pressed_keys--;
-        if (n_pressed_keys == 0)
-            pressed_keys = 0UL;
-
-        pressed_keys &= ~ng_key[keycode - A]; // キーの重ね合わせ
-
-        if (pressed_keys == 0UL) {
-            while (nginput.size > 0) {
-                ng_type(&(nginput.elements[0]));
-                removeFromListArrayAt(&nginput, 0);
-            }
-        } else {
-            if (nginput.size > 0 && number_of_candidates(&(nginput.elements[0])) == 1) {
-                ng_type(&(nginput.elements[0]));
-                removeFromListArrayAt(&nginput, 0);
+        ng_type(true);
+        pressed_keys &= ~ng_key[keycode - A]; // キーを取り除く
+        if ((pressed_keys & B_SPACE) == 0 && pressed_keys != 0) {
+            // スペースを押していないなら次回、キー再利用可能
+            is_reuse_key = true;
+        }
+        break;
+    case SPACE:
+    case ENTER:
+        if (center_shift_count > 0) {
+            center_shift_count--;
+            if (center_shift_count == 0) {
+                ng_type(true);
+                pressed_keys &= ~ng_key[keycode - A]; // キーを取り除く
             }
         }
         break;
@@ -654,9 +572,9 @@ bool naginata_release(struct zmk_behavior_binding *binding,
 static int behavior_naginata_init(const struct device *dev) {
     LOG_DBG("NAGINATA INIT");
 
-    initializeListArray(&nginput);
     pressed_keys = 0UL;
-    n_pressed_keys = 0;
+    n_waiting_keys = 0;
+    is_reuse_key = false;
     naginata_config.os =  NG_WINDOWS;
 
 #if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)

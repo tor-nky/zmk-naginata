@@ -8,6 +8,7 @@ void press_compose_key(void);
 void release_compose_key(void);
 void input_unicode_hex(int, int, int, int);
 
+void ng_space(void);
 void ng_T(void);
 void ng_Y(void);
 void ng_ST(void);
