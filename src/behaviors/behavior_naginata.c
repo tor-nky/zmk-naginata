@@ -384,15 +384,17 @@ static naginata_kanamap ngdickana[] = {
 };
 
 // かな定義を探し、配列の添え字を返す
-// 見つからないと NGMAP_COUNT を返す
+// 見つからないと -1 を返す
 static int ng_search(uint32_t searching_key) {
     // if (!searching_key)  return false;
-    for (int i = sizeof ngdickana / sizeof ngdickana[i]; i-- > 0; ) {   // 逆順で検索
+    // 逆順で検索
+    int i = sizeof ngdickana / sizeof ngdickana[i];
+    while (i-- > 0) {
         if (searching_key == (ngdickana[i].shift | ngdickana[i].douji)) {
-            return i;
+            break;
         }
     }
-    return -1;
+    return i;
 }
 
 // かな定義を探し出力する
