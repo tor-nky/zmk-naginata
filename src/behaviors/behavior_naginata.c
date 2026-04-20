@@ -119,7 +119,7 @@ static const uint32_t ng_key[] = {
     [Q - A] = B_Q,     [R - A] = B_R,         [S - A] = B_S,         [T - A] = B_T,
     [U - A] = B_U,     [V - A] = B_V,         [W - A] = B_W,         [X - A] = B_X,
     [Y - A] = B_Y,     [Z - A] = B_Z,         [SEMI - A] = B_SEMI,   [COMMA - A] = B_COMMA,
-    [DOT - A] = B_DOT, [SLASH - A] = B_SLASH, [SPACE - A] = B_SPACE, [ENTER - A] = B_SPACE,
+    [DOT - A] = B_DOT, [SLASH - A] = B_SLASH, // [SPACE - A] = B_SPACE, [ENTER - A] = B_SPACE,
 };
 
 // カナ変換テーブル
@@ -462,7 +462,7 @@ void ng_type(bool is_send_all) {
             int trans_state = number_of_candidates(searching_keys);
             // 組み合わせがなくなった
             if (trans_state == 0 && n_searching_keys > 1) {
-                n_searching_keys--;  // 最後のキーを減らして検索
+                n_searching_keys--; // 最後のキーを減らして検索
                 continue;
             // まだ変換できない
             } else if (trans_state > 1) {
@@ -517,8 +517,8 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
     case SPACE:
     case ENTER:
         center_shift_count++;
-        recent_key = ng_key[keycode - A];
-        pressed_keys |= recent_key;  // キーを加える
+        recent_key = B_SPACE;
+        pressed_keys |= recent_key; // キーを加える
         ng_center_keycode = keycode;
         // 残り全部出力
         ng_type(true);
@@ -546,7 +546,7 @@ bool naginata_release(struct zmk_behavior_binding *binding,
     case SLASH:
     case SEMI:
         ng_type(true);
-        pressed_keys &= ~ng_key[keycode - A]; // キーを取り除く
+        pressed_keys &= ~ng_key[keycode - A];   // キーを取り除く
         if ((pressed_keys & B_SPACE) == 0 && pressed_keys != 0) {
             // スペースを押していないなら次回、キー再利用可能
             is_reuse_key = true;
@@ -558,7 +558,7 @@ bool naginata_release(struct zmk_behavior_binding *binding,
             center_shift_count--;
             if (center_shift_count == 0) {
                 ng_type(true);
-                pressed_keys &= ~ng_key[keycode - A]; // キーを取り除く
+                pressed_keys &= ~B_SPACE;   // キーを取り除く
             }
         }
         break;
