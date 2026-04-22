@@ -503,9 +503,9 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
     case COMMA:
     case SLASH:
     case SEMI:
+        // 押したキーを保存
         recent_key = ng_key[keycode - A];
         pressed_keys |= recent_key; // キーの重ね合わせ
-        // 配列に押したキーを保存
         waiting_keys[n_waiting_keys++] = recent_key;
         // キー再利用処理
         if (is_reuse_key == true && ng_search(pressed_keys) >= 0) {
@@ -517,13 +517,12 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
     case SPACE:
     case ENTER:
         center_shift_count++;
+        ng_center_keycode = keycode;
+        ng_type(true);  // 残り全部出力
+        is_reuse_key = false;
+        // 押したキーを保存
         recent_key = B_SPACE;
         pressed_keys |= recent_key; // キーを加える
-        ng_center_keycode = keycode;
-        // 残り全部出力
-        ng_type(true);
-        is_reuse_key = false;
-        // 配列に押したキーを保存
         waiting_keys[n_waiting_keys++] = recent_key;
         break;
     }
@@ -545,11 +544,11 @@ bool naginata_release(struct zmk_behavior_binding *binding,
     case COMMA:
     case SLASH:
     case SEMI:
-        ng_type(true);
+        ng_type(true);  // 残り全部出力
         pressed_keys &= ~ng_key[keycode - A];   // キーを取り除く
-        if ((pressed_keys & B_SPACE) == 0 && pressed_keys != 0) {
-            // スペースを押していないなら次回、キー再利用可能
-            is_reuse_key = true;
+        // スペースを押していないなら次回、キー再利用可能
+        if ((pressed_keys & B_SPACE) == 0) {
+            is_reuse_key = (bool)pressed_keys;
         }
         break;
     case SPACE:
@@ -557,7 +556,7 @@ bool naginata_release(struct zmk_behavior_binding *binding,
         if (center_shift_count > 0) {
             center_shift_count--;
             if (center_shift_count == 0) {
-                ng_type(true);
+                ng_type(true);  // 残り全部出力
                 pressed_keys &= ~B_SPACE;   // キーを取り除く
             }
         }
