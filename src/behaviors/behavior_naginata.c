@@ -525,6 +525,10 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
         pressed_keys |= recent_key; // キーを加える
         waiting_keys[n_waiting_keys++] = recent_key;
         break;
+    case OUT:
+        ng_type(true);  // 残り全部出力
+        is_reuse_key = false;
+        break;
     }
 
     LOG_DBG("<NAGINATA PRESS");
