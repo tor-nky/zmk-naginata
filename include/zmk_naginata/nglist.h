@@ -10,7 +10,6 @@ typedef struct {
 
 void initializeList(NGList *);
 bool addToList(NGList *, uint32_t);
-bool addToListAt(NGList *, uint32_t, int);
 int includeList(NGList *, uint32_t);
 bool removeFromList(NGList *, uint32_t);
 bool removeFromListAt(NGList *, int);

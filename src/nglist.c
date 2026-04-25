@@ -14,20 +14,6 @@ bool addToList(NGList *list, uint32_t element) {
     return true;
 }
 
-bool addToListAt(NGList *list, uint32_t element, int idx) {
-    if (list->size >= LIST_SIZE) {
-        return false;
-    }
-    for (int i = idx; i < list->size; i++) {
-        list->elements[i + i] = list->elements[i];
-    }
-    // 集合に要素を追加
-    list->elements[idx] = element;
-    list->size++;
-
-    return true;
-}
-
 int includeList(NGList *list, uint32_t element) {
     // 要素のインデックスを見つける
     for (int i = 0; i < list->size; i++) {

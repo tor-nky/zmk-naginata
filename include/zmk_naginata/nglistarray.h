@@ -10,6 +10,5 @@ typedef struct {
 
 void initializeListArray(NGListArray *);
 bool addToListArray(NGListArray *, NGList *);
-bool addToListArrayAt(NGListArray *, NGList *, int);
 int includeListArray(NGListArray *, NGList *);
 bool removeFromListArrayAt(NGListArray *, int);
