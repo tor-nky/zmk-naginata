@@ -307,7 +307,7 @@ static naginata_kanamap ngdickana[] = {
     {.shift = B_SPACE , .douji = B_V            , .kana = {COMMA, ENTER, NONE, NONE, NONE, NONE }, .func = nofunc},
     {.shift = NONE    , .douji = B_Q            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = nofunc},
     {.shift = B_SPACE , .douji = B_M            , .kana = {DOT, ENTER, NONE, NONE, NONE, NONE   }, .func = nofunc},
-    {.shift = NONE    , .douji = B_U            , .kana = {BSPC, NONE, NONE, NONE, NONE, NONE   }, .func = nofunc},
+    {.shift = NONE    , .douji = B_U            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = ng_bspc},
 
     {.shift = NONE    , .douji = B_V|B_M        , .kana = {ENTER, NONE, NONE, NONE, NONE, NONE  }, .func = nofunc}, // enter
     // {.shift = B_SPACE, .douji = B_V|B_M, .kana = {ENTER, NONE, NONE, NONE, NONE, NONE}, .func = nofunc}, // enter+シフト(連続シフト)
@@ -448,6 +448,7 @@ void ng_type(bool is_send_all) {
     LOG_DBG(">NAGINATA NG_TYPE");
 
     int8_t n_searching_keys = n_waiting_keys;
+    end_repeating();
 
     while (n_searching_keys) {
         // バッファ内のキーを組み合わせる
@@ -481,6 +482,9 @@ void ng_type(bool is_send_all) {
                 waiting_keys[i] = waiting_keys[i + n_searching_keys];
             }
             n_searching_keys = n_waiting_keys;
+            if (n_searching_keys > 0 || is_send_all) {
+                end_repeating();
+            }
         // 見つからなかったら最後のキーを減らして再検索
         } else {
             n_searching_keys--;

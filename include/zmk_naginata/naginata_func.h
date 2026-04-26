@@ -1,3 +1,4 @@
+void end_repeating(void);
 
 void naginata_on(void);
 // void naginata_off(void);
@@ -9,6 +10,7 @@ void release_compose_key(void);
 void input_unicode_hex(int, int, int, int);
 
 void ng_space(void);
+void ng_bspc(void);
 void ng_T(void);
 void ng_Y(void);
 void ng_ST(void);
@@ -84,6 +86,10 @@ void ng_next_row(void);
 void ng_prev_row(void);
 void ng_next_char(void);
 void ng_prev_char(void);
+void ng_next_row_keep_pressing(void);
+void ng_prev_row_keep_pressing(void);
+void ng_next_char_keep_pressing(void);
+void ng_prev_char_keep_pressing(void);
 void ng_home(void);
 void ng_end(void);
 void ng_katakana(void);
