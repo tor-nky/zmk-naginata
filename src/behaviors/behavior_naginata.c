@@ -541,8 +541,8 @@ bool naginata_press(struct zmk_behavior_binding *binding, struct zmk_behavior_bi
                                      {ENTER, 0}, {F, 0}, {V, 0}, {J, 0},     {M, 0}};
 
         uint32_t keyset = 0UL;
-        for (int i = 0; i < nginput.elements[0].size; i++) {
-            keyset |= ng_key[nginput.elements[0].elements[i] - A];
+        for (int i = 0; i < nginput.elements[nginput.size - 1].size; i++) {
+            keyset |= ng_key[nginput.elements[nginput.size - 1].elements[i] - A];
         }
         for (int i = 0; i < 10; i++) {
             NGList rskc;
