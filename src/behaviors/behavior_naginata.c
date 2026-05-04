@@ -306,6 +306,7 @@ static naginata_kanamap ngdickana[] = {
     {.shift = NONE    , .douji = B_SPACE        , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = ng_space},
     {.shift = B_SPACE , .douji = B_V            , .kana = {COMMA, ENTER, NONE, NONE, NONE, NONE }, .func = nofunc},
     {.shift = NONE    , .douji = B_Q            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = nofunc},
+    {.shift = B_SPACE , .douji = B_Q            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = nofunc},
     {.shift = B_SPACE , .douji = B_M            , .kana = {DOT, ENTER, NONE, NONE, NONE, NONE   }, .func = nofunc},
     {.shift = NONE    , .douji = B_U            , .kana = {NONE, NONE, NONE, NONE, NONE, NONE   }, .func = ng_bspc},
 
