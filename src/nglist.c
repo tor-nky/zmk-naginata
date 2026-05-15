@@ -19,7 +19,6 @@ int includeList(NGList *list, uint32_t element) {
     for (int i = 0; i < list->size; i++) {
         if (list->elements[i] == element) {
             return i;
-            break;
         }
     }
 
@@ -51,6 +50,9 @@ void copyList(NGList *a, NGList *b) {
 
 // 集合から要素を削除する関数
 bool removeFromListAt(NGList *list, int idx) {
+    if (idx < 0 || idx >= list->size) {
+        return false;
+    }
     // 要素を削除して集合を再構築
     for (int i = idx; i < list->size - 1; i++) {
         list->elements[i] = list->elements[i + 1];

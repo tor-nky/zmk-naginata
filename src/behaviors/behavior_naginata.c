@@ -19,7 +19,6 @@
 #include <zmk_naginata/naginata_func.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
-extern int64_t timestamp;
 
 #define NONE 0
 
@@ -68,16 +67,6 @@ static NGListArray nginput;
 static uint32_t pressed_keys = 0UL; // 押しているキーのビットをたてる
 static int8_t n_pressed_keys = 0;   // 押しているキーの数
 
-#define NG_WINDOWS 0
-#define NG_MACOS 1
-#define NG_LINUX 2
-#define NG_IOS 3
-
-typedef union {
-    uint8_t os : 2;  // 2 bits can store values 0-3 (NG_WINDOWS, NG_MACOS, NG_LINUX, NG_IOS)
-    bool tategaki : 1;
-} user_config_t;
-
 extern user_config_t naginata_config;
 
 static const uint32_t ng_key[] = {
@@ -91,11 +80,13 @@ static const uint32_t ng_key[] = {
     [DOT - A] = B_DOT, [SLASH - A] = B_SLASH, [SPACE - A] = B_SPACE, [ENTER - A] = B_SPACE,
 };
 
+#define KANA_MAX_LEN 6
+
 // カナ変換テーブル
 typedef struct {
     uint32_t shift;
     uint32_t douji;
-    uint32_t kana[6];
+    uint32_t kana[KANA_MAX_LEN];
     void (*func)(void);
 } naginata_kanamap;
 
@@ -425,14 +416,12 @@ static int count_kana_entries(NGList *keys, bool exact_match) {
   return count;
 }
 
-int number_of_matches(NGList *keys) {  
-  int result = count_kana_entries(keys, true);
-  return result;
+int number_of_matches(NGList *keys) {
+  return count_kana_entries(keys, true);
 }
 
 int number_of_candidates(NGList *keys) {
-  int result = count_kana_entries(keys, false);
-  return result;
+  return count_kana_entries(keys, false);
 }
 
 // キー入力を文字に変換して出力する
@@ -442,10 +431,12 @@ void ng_type(NGList *keys) {
     if (keys->size == 0)
         return;
 
+    int64_t ts = naginata_get_timestamp();
+
     if (keys->size == 1 && keys->elements[0] == ENTER) {
         LOG_DBG(" NAGINATA type keycode 0x%02X", ENTER);
-        raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
-        raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, true, ts);
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, false, ts);
         return;
     }
 
@@ -457,14 +448,14 @@ void ng_type(NGList *keys) {
     for (int i = 0; i < sizeof ngdickana / sizeof ngdickana[0]; i++) {
         if ((ngdickana[i].shift | ngdickana[i].douji) == keyset) {
             if (ngdickana[i].kana[0] != NONE) {
-                for (int k = 0; k < 6; k++) {
+                for (int k = 0; k < KANA_MAX_LEN; k++) {
                     if (ngdickana[i].kana[k] == NONE)
                         break;
                     LOG_DBG(" NAGINATA type keycode 0x%02X", ngdickana[i].kana[k]);
                     raise_zmk_keycode_state_changed_from_encoded(ngdickana[i].kana[k], true,
-                                                                 timestamp);
+                                                                 ts);
                     raise_zmk_keycode_state_changed_from_encoded(ngdickana[i].kana[k], false,
-                                                                 timestamp);
+                                                                 ts);
                 }
             } else {
                 ngdickana[i].func();
@@ -657,7 +648,7 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
             return ZMK_BEHAVIOR_OPAQUE;
     }
 
-    timestamp = event.timestamp;
+    naginata_set_timestamp(event.timestamp);
     naginata_press(binding, event);
 
     return ZMK_BEHAVIOR_OPAQUE;
@@ -667,7 +658,7 @@ static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                       struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
 
-    timestamp = event.timestamp;
+    naginata_set_timestamp(event.timestamp);
     naginata_release(binding, event);
 
     return ZMK_BEHAVIOR_OPAQUE;
