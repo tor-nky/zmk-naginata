@@ -18,7 +18,6 @@
 #include <zmk_naginata/naginata_func.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
-extern int64_t timestamp;
 
 #define NONE 0
 
@@ -72,16 +71,6 @@ static bool is_reuse_key = false;
 extern int8_t   center_shift_count;
 extern uint32_t ng_center_keycode;
 
-#define NG_WINDOWS 0
-#define NG_MACOS 1
-#define NG_LINUX 2
-#define NG_IOS 3
-
-typedef struct {
-    uint8_t os : 2;  // 2 bits can store values 0-3 (NG_WINDOWS, NG_MACOS, NG_LINUX, NG_IOS)
-    bool tategaki : 1;
-} user_config_t;
-
 extern user_config_t naginata_config;
 
 #if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
@@ -122,11 +111,13 @@ static const uint32_t ng_key[] = {
     [DOT - A] = B_DOT, [SLASH - A] = B_SLASH, // [SPACE - A] = B_SPACE, [ENTER - A] = B_SPACE,
 };
 
+#define KANA_MAX_LEN 6
+
 // カナ変換テーブル
 typedef struct {
     uint32_t shift;
     uint32_t douji;
-    uint32_t kana[6];
+    uint32_t kana[KANA_MAX_LEN];
     void (*func)(void);
 } naginata_kanamap;
 
@@ -402,6 +393,7 @@ static int ng_search(uint32_t searching_key) {
 // 成功すれば true を返す
 static bool ng_search_and_send(uint32_t searching_key) {
     // if (!searching_key)  return false;
+    int64_t ts = naginata_get_timestamp();
     int i = ng_search(searching_key);
     if (i >= 0) {
         for (int k = 0; k < 6; k++) {
@@ -409,8 +401,8 @@ static bool ng_search_and_send(uint32_t searching_key) {
             if (kana == NONE)
                 break;
             LOG_DBG(" NAGINATA type keycode 0x%02X", kana);
-            raise_zmk_keycode_state_changed_from_encoded(kana, true, timestamp);
-            raise_zmk_keycode_state_changed_from_encoded(kana, false, timestamp);
+            raise_zmk_keycode_state_changed_from_encoded(kana, true, ts);
+            raise_zmk_keycode_state_changed_from_encoded(kana, false, ts);
         }
         ngdickana[i].func();
         return true;
@@ -631,7 +623,8 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                 return ZMK_BEHAVIOR_OPAQUE;
         }
     }
-    timestamp = event.timestamp;
+
+    naginata_set_timestamp(event.timestamp);
     naginata_press(binding, event);
 
     return ZMK_BEHAVIOR_OPAQUE;
@@ -641,7 +634,7 @@ static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                       struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
 
-    timestamp = event.timestamp;
+    naginata_set_timestamp(event.timestamp);
     naginata_release(binding, event);
 
     return ZMK_BEHAVIOR_OPAQUE;
