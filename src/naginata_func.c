@@ -262,7 +262,7 @@ void ngh_DFO() { // {Del}
     raise_zmk_keycode_state_changed_from_encoded(DELETE, false, timestamp);
 }
 
-void ngh_DFP() { // +{Esc 2}
+void ngh_DFP() { // +{Esc 3}
     raise_zmk_keycode_state_changed_from_encoded(LSHIFT, true, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(ESC, true, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(ESC, false, timestamp);
@@ -373,8 +373,8 @@ void ngh_MCR() { // {Home}{改行}{Space 1}{←}
     ng_next_row();
 }
 
-void ngh_MCT() { // 〇{改行}
-    input_unicode_hex(N3, N0, N0, N7);
+void ngh_MCT() { // ○{改行}
+    input_unicode_hex(N2, N5, C, B);
 }
 
 void ngh_MCA() { // 《{改行}
