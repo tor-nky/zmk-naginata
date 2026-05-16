@@ -9,17 +9,10 @@
 #include <zmk/behavior_queue.h>
 #include <zmk_naginata/naginata_func.h>
 
-int64_t timestamp;
+static int64_t timestamp;
 
-#define NG_WINDOWS 0
-#define NG_MACOS 1
-#define NG_LINUX 2
-#define NG_IOS 3
-
-typedef struct {
-    uint8_t os : 2;
-    bool tategaki : 1; // true: 縦書き, false: 横書き
-} user_config_t;
+void naginata_set_timestamp(int64_t ts) { timestamp = ts; }
+int64_t naginata_get_timestamp(void) { return timestamp; }
 
 user_config_t naginata_config;
 
@@ -39,7 +32,7 @@ void naginata_on(void) {
 //     raise_zmk_keycode_state_changed_from_encoded(INT5, false, timestamp);
 // }
 
-void nofunc() {}
+void nofunc(void) {}
 
 void switch_to_hex_input() {
     switch (naginata_config.os) {
