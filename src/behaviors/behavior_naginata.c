@@ -571,6 +571,36 @@ bool naginata_release(struct zmk_behavior_binding *binding,
 
 // 薙刀式
 
+static void naginata_setting_change(uint32_t keycode) {
+#if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
+    uint8_t saved_os = naginata_config.os;
+    bool saved_tategaki = naginata_config.tategaki;
+#endif
+    switch (keycode) {
+        case F15:
+            naginata_config.os = NG_WINDOWS;
+            break;
+        case F16:
+            naginata_config.os = NG_MACOS;
+            break;
+        case F17:
+            naginata_config.os = NG_LINUX;
+            break;
+        case F18:
+            naginata_config.tategaki = true;
+            break;
+        case F19:
+            naginata_config.tategaki = false;
+            break;
+    }
+#if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
+    if (naginata_config.os != saved_os || naginata_config.tategaki != saved_tategaki) {
+        // Debounce saving to flash to reduce wear
+        k_work_reschedule(&naginata_save_work, K_MSEC(CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE));
+    }
+#endif
+}
+
 static int behavior_naginata_init(const struct device *dev) {
     LOG_DBG("NAGINATA INIT");
 
@@ -590,38 +620,10 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
 
     // F15が押されたらnaginata_config.os=NG_WINDOWS
-    {
-#if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
-        uint8_t saved_os = naginata_config.os;
-        bool saved_tategaki = naginata_config.tategaki;
-#endif
-        switch (binding->param1) {
-            case F15:
-                naginata_config.os = NG_WINDOWS;
-                break;
-            case F16:
-                naginata_config.os = NG_MACOS;
-                break;
-            case F17:
-                naginata_config.os = NG_LINUX;
-                break;
-            case F18:
-                naginata_config.tategaki = true;
-                break;
-            case F19:
-                naginata_config.tategaki = false;
-                break;
-        }
-        switch (binding->param1) {
-            case F15 ... F19:
-#if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
-                if (naginata_config.os != saved_os || naginata_config.tategaki != saved_tategaki) {
-                    // Debounce saving to flash to reduce wear
-                    k_work_reschedule(&naginata_save_work, K_MSEC(CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE));
-                }
-#endif
-                return ZMK_BEHAVIOR_OPAQUE;
-        }
+    switch (binding->param1) {
+        case F15 ... F19:
+            naginata_setting_change(binding->param1);
+            return ZMK_BEHAVIOR_OPAQUE;
     }
 
     naginata_set_timestamp(event.timestamp);
