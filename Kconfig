@@ -4,6 +4,23 @@ config NAGINATA
 
 if NAGINATA
 
+choice
+    prompt "Naginata default OS"
+    default NAGINATA_DEFAULT_OS_MACOS
+    help
+      薙刀式が起動時に想定するOS。実行時にF15(Windows)/F16(macOS)/F17(Linux)で切り替え可能。
+
+config NAGINATA_DEFAULT_OS_WINDOWS
+    bool "Windows"
+
+config NAGINATA_DEFAULT_OS_MACOS
+    bool "macOS"
+
+config NAGINATA_DEFAULT_OS_LINUX
+    bool "Linux"
+
+endchoice
+
 config NAGINATA_PERSISTENT_STATE
     bool "Naginata Persistent State"
     default y
@@ -12,4 +29,4 @@ config NAGINATA_PERSISTENT_STATE
       Enable persistent storage of Naginata state across reboots.
       This feature requires CONFIG_SETTINGS to be enabled.
 
-endif
+endif # NAGINATA

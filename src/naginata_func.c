@@ -69,7 +69,7 @@ void switch_to_hex_input() {
         case NG_LINUX:
             return;
         case NG_IOS:
-            return;
+            break;
     }
 }
 
@@ -85,7 +85,7 @@ void return_to_kana_input() {
         case NG_WINDOWS:
         case NG_LINUX:
         case NG_IOS:
-            return;
+            break;
     }
 }
 
@@ -108,7 +108,7 @@ void press_compose_key() {
             k_sleep(K_MSEC(50));
             return;
         case NG_IOS:
-            return;
+            break;
     }
 }
 
@@ -129,7 +129,7 @@ void release_compose_key() {
             k_sleep(K_MSEC(50));
             return;
         case NG_IOS:
-            return;
+            break;
     }
 }
 

@@ -121,7 +121,7 @@ typedef struct {
     void (*func)(void);
 } naginata_kanamap;
 
-static naginata_kanamap ngdickana[] = {
+static const naginata_kanamap ngdickana[] = {
     // 清音
     {.shift = NONE    , .douji = B_J            , .kana = {A, NONE, NONE, NONE, NONE, NONE}, .func = nofunc }, // あ
     {.shift = NONE    , .douji = B_K            , .kana = {I, NONE, NONE, NONE, NONE, NONE}, .func = nofunc }, // い
@@ -607,7 +607,13 @@ static int behavior_naginata_init(const struct device *dev) {
     pressed_keys = 0UL;
     n_waiting_keys = 0;
     is_reuse_key = false;
-    naginata_config.os =  NG_WINDOWS;
+#if defined(CONFIG_NAGINATA_DEFAULT_OS_WINDOWS)
+    naginata_config.os = NG_WINDOWS;
+#elif defined(CONFIG_NAGINATA_DEFAULT_OS_LINUX)
+    naginata_config.os = NG_LINUX;
+#else
+    naginata_config.os = NG_MACOS;
+#endif
 
 #if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
     k_work_init_delayable(&naginata_save_work, naginata_save_work_handler);
@@ -622,8 +628,8 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     // F15が押されたらnaginata_config.os=NG_WINDOWS
     switch (binding->param1) {
         case F15 ... F19:
-            naginata_setting_change(binding->param1);
-            return ZMK_BEHAVIOR_OPAQUE;
+        naginata_setting_change(binding->param1);
+        return ZMK_BEHAVIOR_OPAQUE;
     }
 
     naginata_set_timestamp(event.timestamp);
