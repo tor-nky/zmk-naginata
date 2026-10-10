@@ -175,10 +175,10 @@ static const naginata_kanamap ngdickana[] = {
     {.shift = B_SPACE   , .douji = B_Z             , .kana = {H, O, NONE, NONE, NONE, NONE}, .func = nofunc        }, // ほ
     {.shift = B_SPACE   , .douji = B_X             , .kana = {H, I, NONE, NONE, NONE, NONE}, .func = nofunc        }, // ひ
     {.shift = B_SPACE   , .douji = B_C             , .kana = {W, O, NONE, NONE, NONE, NONE}, .func = nofunc        }, // を
-    {.shift = B_SPACE   , .douji = B_V             , .kana = {COMMA, ENTER, NONE, NONE, NONE, NONE}, .func = nofunc        }, // 、{Enter}
+    {.shift = B_SPACE   , .douji = B_V             , .kana = {COMMA, NONE, NONE, NONE, NONE, NONE}, .func = ng_kakutei        }, // 、{Enter}
     {.shift = B_SPACE   , .douji = B_B             , .kana = {N, U, NONE, NONE, NONE, NONE}, .func = nofunc        }, // ぬ
     {.shift = B_SPACE   , .douji = B_N             , .kana = {O, NONE, NONE, NONE, NONE, NONE}, .func = nofunc        }, // お
-    {.shift = B_SPACE   , .douji = B_M             , .kana = {DOT, ENTER, NONE, NONE, NONE, NONE}, .func = nofunc        }, // 。{Enter}
+    {.shift = B_SPACE   , .douji = B_M             , .kana = {DOT, NONE, NONE, NONE, NONE, NONE}, .func = ng_kakutei        }, // 。{Enter}
     {.shift = B_SPACE   , .douji = B_COMMA         , .kana = {M, U, NONE, NONE, NONE, NONE}, .func = nofunc        }, // む
     {.shift = B_SPACE   , .douji = B_DOT           , .kana = {W, A, NONE, NONE, NONE, NONE}, .func = nofunc        }, // わ
     {.shift = B_SPACE   , .douji = B_SLASH         , .kana = {R, E, NONE, NONE, NONE, NONE}, .func = nofunc        }, // れ
@@ -378,7 +378,7 @@ static bool ng_search_and_send(uint32_t searching_key) {
     int64_t ts = naginata_get_timestamp();
     int i = ng_search(searching_key);
     if (i >= 0) {
-        for (int k = 0; k < 6; k++) {
+        for (int k = 0; k < KANA_MAX_LEN; k++) {
             uint32_t kana = ngdickana[i].kana[k];
             if (kana == NONE)
                 break;
@@ -574,6 +574,9 @@ static void naginata_setting_change(uint32_t keycode) {
         case F19:
             naginata_config.tategaki = false;
             break;
+        case F20:
+            naginata_config.os = NG_IOS;
+            break;
     }
 #if IS_ENABLED(CONFIG_NAGINATA_PERSISTENT_STATE)
     if (naginata_config.os != saved_os || naginata_config.tategaki != saved_tategaki) {
@@ -593,6 +596,8 @@ static int behavior_naginata_init(const struct device *dev) {
     naginata_config.os = NG_WINDOWS;
 #elif defined(CONFIG_NAGINATA_DEFAULT_OS_LINUX)
     naginata_config.os = NG_LINUX;
+#elif defined(CONFIG_NAGINATA_DEFAULT_OS_IOS)
+    naginata_config.os = NG_IOS;
 #else
     naginata_config.os = NG_MACOS;
 #endif
@@ -609,7 +614,7 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
 
     // F15が押されたらnaginata_config.os=NG_WINDOWS
     switch (binding->param1) {
-        case F15 ... F19:
+        case F15 ... F20:
         naginata_setting_change(binding->param1);
         return ZMK_BEHAVIOR_OPAQUE;
     }

@@ -230,7 +230,16 @@ void ngh_JKQ() { // ^{End}
 }
 
 void ngh_JKW() { // ／{改行}
-    input_unicode_hex(F, F, N0, F);
+    switch (naginata_config.os) {
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LA(SLASH), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LA(SLASH), false, timestamp);
+        ng_kakutei();
+        break;
+    default:
+        input_unicode_hex(F, F, N0, F);
+        break;
+    }
 }
 
 void ngh_JKE() { // /*ディ*/
@@ -252,8 +261,19 @@ void ngh_JKT() { // ・
 }
 
 void ngh_JKA() { // ……{改行}
-    input_unicode_hex(N2, N0, N2, N6);
-    input_unicode_hex(N2, N0, N2, N6);
+    switch (naginata_config.os) {
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LA(SEMI), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LA(SEMI), false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LA(SEMI), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LA(SEMI), false, timestamp);
+        ng_kakutei();
+        break;
+    default:
+        input_unicode_hex(N2, N0, N2, N6);
+        input_unicode_hex(N2, N0, N2, N6);
+        break;
+    }
 }
 
 void ngh_JKS() { // 『{改行}
@@ -261,8 +281,17 @@ void ngh_JKS() { // 『{改行}
 }
 
 void ngh_JKD() { // ？{改行}
-    // U+FF1F FULLWIDTH QUESTION MARK (input_unicode_hex adds Enter on Win/Linux).
-    input_unicode_hex(F, F, N1, F);
+    switch (naginata_config.os) {
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LS(SLASH), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LS(SLASH), false, timestamp);
+        ng_kakutei();
+        break;
+    default:
+        // U+FF1F FULLWIDTH QUESTION MARK (input_unicode_hex adds Enter on Win/Linux).
+        input_unicode_hex(F, F, N1, F);
+        break;
+    }
 }
 
 void ngh_JKF() { // 「{改行}
@@ -283,8 +312,17 @@ void ngh_JKX() { // 』{改行}
 }
 
 void ngh_JKC() { // ！{改行}
-    // U+FF01 FULLWIDTH EXCLAMATION MARK (input_unicode_hex adds Enter on Win/Linux).
-    input_unicode_hex(F, F, N0, N1);
+    switch (naginata_config.os) {
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LS(N1), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LS(N1), false, timestamp);
+        ng_kakutei();
+        break;
+    default:
+        // U+FF01 FULLWIDTH EXCLAMATION MARK (input_unicode_hex adds Enter on Win/Linux).
+        input_unicode_hex(F, F, N0, N1);
+        break;
+    }
 }
 
 void ngh_JKV() { // 」{改行}
@@ -342,8 +380,15 @@ void ngh_DFP() { // +{Esc 3}
 }
 
 void ngh_DFH() { // {Enter}{End}
-    raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
-    raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
+    switch (naginata_config.os) {
+    case NG_IOS:
+        ng_kakutei();
+        break;
+    default:
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
+        break;
+    }
     ng_end();
 }
 
@@ -493,6 +538,13 @@ void ngh_MCF() { // {Home}{改行}{Space 3}{←}
 }
 
 void ngh_MCG() { // {Space 3}
+    switch (naginata_config.os) {
+    case NG_IOS:
+        ng_kakutei();
+        break;
+    default:
+        break;
+    }
     raise_zmk_keycode_state_changed_from_encoded(SPACE, true, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(SPACE, false, timestamp);
     raise_zmk_keycode_state_changed_from_encoded(SPACE, true, timestamp);
@@ -619,9 +671,13 @@ void ng_cut() {
         raise_zmk_keycode_state_changed_from_encoded(LC(X), false, timestamp);
         break;
     case NG_MACOS:
+        raise_zmk_keycode_state_changed_from_encoded(LG(X), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LG(X), false, timestamp);
+        break;
     case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(X), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(X), false, timestamp);
+        k_sleep(K_MSEC(60));
         break;
     }
 }
@@ -649,11 +705,15 @@ void ng_paste() {
         raise_zmk_keycode_state_changed_from_encoded(LC(V), false, timestamp);
         break;
     case NG_MACOS:
-    case NG_IOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(V), true, timestamp);
         k_sleep(K_MSEC(100));
         raise_zmk_keycode_state_changed_from_encoded(LG(V), false, timestamp);
         k_sleep(K_MSEC(100));
+        break;
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LG(V), true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LG(V), false, timestamp);
+        k_sleep(K_MSEC(220));
         break;
     }
 }
@@ -869,12 +929,29 @@ void ng_eof() {
         raise_zmk_keycode_state_changed_from_encoded(LC(END), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LC(END), false, timestamp);
         break;
-    case NG_MACOS:
     case NG_IOS:
+        ng_kakutei();
+        // fallthrough
+    case NG_MACOS:
         raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(LEFT), false, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(DOWN), true, timestamp);
         raise_zmk_keycode_state_changed_from_encoded(LG(DOWN), false, timestamp);
+        break;
+    }
+}
+
+void ng_kakutei() {
+    switch (naginata_config.os) {
+    case NG_IOS:
+        raise_zmk_keycode_state_changed_from_encoded(LANG2, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LANG2, false, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LANG1, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(LANG1, false, timestamp);
+        break;
+    default:
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, true, timestamp);
+        raise_zmk_keycode_state_changed_from_encoded(ENTER, false, timestamp);
         break;
     }
 }

@@ -103,3 +103,4 @@ void ng_redo(void);
 void ng_undo(void);
 void ng_saihenkan(void);
 void ng_eof(void);
+void ng_kakutei(void);
